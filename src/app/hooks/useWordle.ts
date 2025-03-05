@@ -2,11 +2,50 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { WORD_BANK } from '../data/wordList';
+import { encrypt, decrypt } from '../utils/rsa';
 
-export function useWordle() {
-  const [solution, setSolution] = useState(() => {
-    return WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
-  });
+// Simple hash function to convert seed phrase to number
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+// Get word from seed phrase
+function getWordFromSeed(seed: string): string {
+  if (!seed) {
+    // For random words, use current timestamp to ensure different words
+    const timestamp = Date.now();
+    return WORD_BANK[timestamp % WORD_BANK.length];
+  }
+  try {
+    // Decrypt the seed phrase to get the original word
+    const decryptedWord = decrypt(seed);
+    // Find the word in the word bank
+    const index = WORD_BANK.indexOf(decryptedWord);
+    if (index !== -1) {
+      return decryptedWord;
+    }
+  } catch (error) {
+    console.error('Invalid seed phrase:', error);
+  }
+  // If decryption fails or word not found, use random word
+  const timestamp = Date.now();
+  return WORD_BANK[timestamp % WORD_BANK.length];
+}
+
+// Get a different word from the word bank based on the solution
+function getSeedPhraseWord(solution: string): string {
+  // Encrypt the solution word to create the seed phrase
+  return encrypt(solution);
+}
+
+export function useWordle(seedPhrase: string = '', isGameStarted: boolean = false) {
+  const [solution, setSolution] = useState(() => getWordFromSeed(seedPhrase));
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [isGameOver, setIsGameOver] = useState(false);
@@ -15,8 +54,13 @@ export function useWordle() {
   const [usedKeys, setUsedKeys] = useState<{ [key: string]: 'correct' | 'present' | 'absent' }>({});
   const [lastProcessedKey, setLastProcessedKey] = useState({ key: '', timestamp: 0 });
 
+  // Update solution when seed phrase changes
+  useEffect(() => {
+    setSolution(getWordFromSeed(seedPhrase));
+  }, [seedPhrase]);
+
   const processKey = useCallback((key: string, source: string = 'unknown') => {
-    if (isGameOver) return;
+    if (isGameOver || !isGameStarted) return;
 
     // Handle backspace
     if (key === 'BACKSPACE') {
@@ -75,13 +119,13 @@ export function useWordle() {
       console.log('Adding letter:', key, 'New guess:', newGuess, 'Length:', newGuess.length);
       setCurrentGuess(newGuess);
     }
-  }, [currentGuess, guesses, isGameOver, solution]);
+  }, [currentGuess, guesses, isGameOver, solution, isGameStarted]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
       
-      if (isGameOver) return;
+      if (isGameOver || !isGameStarted) return;
       
       // Prevent default behavior for game-related keys
       if (e.key === 'Enter' || e.key === 'Backspace' || /^[a-zA-Z]$/.test(e.key)) {
@@ -102,7 +146,7 @@ export function useWordle() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGameOver, processKey]);
+  }, [isGameOver, processKey, isGameStarted]);
 
   const updateUsedKeys = (guess: string) => {
     setUsedKeys(prev => {
@@ -129,8 +173,10 @@ export function useWordle() {
   };
 
   const restartGame = () => {
-    // Generate new solution
-    setSolution(WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)]);
+    // Generate new solution if no seed phrase is provided
+    if (!seedPhrase) {
+      setSolution(getWordFromSeed(''));
+    }
     // Reset all state
     setGuesses([]);
     setCurrentGuess('');
@@ -139,6 +185,9 @@ export function useWordle() {
     setMessage('');
     setUsedKeys({});
   };
+
+  // Get the seed phrase word to display (encrypted version of the solution)
+  const seedPhraseWord = getSeedPhraseWord(solution);
 
   return {
     solution,
@@ -149,6 +198,7 @@ export function useWordle() {
     message,
     usedKeys,
     processKey,
-    restartGame
+    restartGame,
+    seedPhraseWord
   };
 } 

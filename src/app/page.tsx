@@ -1,11 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import GameBoard from './components/GameBoard';
 import Keyboard from './components/Keyboard';
 import GameWinConfetti from './components/GameWinConfetti';
+import StartPage from './components/StartPage';
 import { useWordle } from './hooks/useWordle';
+import { WORD_BANK } from './data/wordList';
 
 export default function Home() {
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const [seedPhrase, setSeedPhrase] = useState('');
   const { 
     solution, 
     guesses, 
@@ -15,8 +20,18 @@ export default function Home() {
     message, 
     usedKeys, 
     processKey,
-    restartGame
-  } = useWordle();
+    restartGame,
+    seedPhraseWord
+  } = useWordle(seedPhrase, isGameStarted);
+
+  const handleStart = (phrase: string) => {
+    setSeedPhrase(phrase);
+    setIsGameStarted(true);
+  };
+
+  if (!isGameStarted) {
+    return <StartPage onStart={handleStart} />;
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
@@ -25,7 +40,11 @@ export default function Home() {
         <div className="w-full flex justify-between items-center">
           <h1 className="text-4xl font-bold">Wordle</h1>
           <button
-            onClick={restartGame}
+            onClick={() => {
+              setIsGameStarted(false);
+              setSeedPhrase('');
+              restartGame();
+            }}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
           >
             New Game
@@ -47,6 +66,18 @@ export default function Home() {
           onKey={processKey}
           usedKeys={usedKeys}
         />
+
+        {/* Display seed phrase if game is over */}
+        {isGameOver && (
+          <div className="mt-4 text-center">
+            <p className="text-gray-600 dark:text-gray-400">
+              Share this seed phrase to play with the same word:
+            </p>
+            <p className="font-mono text-lg mt-2">
+              {seedPhrase || seedPhraseWord}
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );
