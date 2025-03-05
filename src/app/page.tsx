@@ -67,17 +67,15 @@ export default function Home() {
           usedKeys={usedKeys}
         />
 
-        {/* Display seed phrase if game is over */}
-        {isGameOver && (
-          <div className="mt-4 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Share this seed phrase to play with the same word:
-            </p>
-            <p className="font-mono text-lg mt-2">
-              {seedPhrase || seedPhraseWord}
-            </p>
-          </div>
-        )}
+        {/* Display seed phrase */}
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">
+            Share this seed phrase to play with the same word:
+          </p>
+          <p className="font-mono text-lg mt-2">
+            {seedPhrase || seedPhraseWord}
+          </p>
+        </div>
       </div>
     </main>
   );
