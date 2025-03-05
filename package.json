@@ -4,7 +4,7 @@
   "private": true,
   "homepage": "https://shouenlee.github.io/wordle",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,18 +12,20 @@
     "deploy": "gh-pages -d out"
   },
   "dependencies": {
-    "next": "15.2.1",
-    "react": "^19.0.0",
+    "next": "^14.1.0",
+    "react": "^18.2.0",
     "react-confetti": "^6.4.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.14",
     "gh-pages": "^6.3.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "postcss": "^8.4.31",
+    "postcss-import": "^16.1.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.3.3"
   }
 }
